@@ -1,0 +1,59 @@
+{
+  "name": "surved-api",
+  "version": "1.0.0",
+  "description": "Surved Nodejs API",
+  "main": "index.js",
+  "scripts": {
+    "start": "node start.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "4.16.3",
+    "express-graphql": "0.6.12",
+    "graphql-tools": "3.1.1"
+  },
+  "devDependencies": {
+    "@types/chalk": "^2.2.0",
+    "@types/node": "^10.7.1",
+    "chalk": "^2.4.1",
+    "react-dev-utils": "^5.0.1",
+    "ts-loader": "4.5.0",
+    "ts-node": "7.0.1",
+    "tslint": "5.11.0",
+    "typescript": "3.0.1",
+    "webpack": "4.16.5",
+    "webpack-cli": "^3.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/surved/surved-api.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/surved/surved-api/issues"
+  },
+  "jest": {
+    "globals": {
+      "ts-jest": {
+        "tsConfigFile": "tsconfig.json"
+      }
+    },
+    "moduleFileExtensions": [
+      "ts",
+      "js",
+      "json"
+    ],
+    "moduleDirectories": [
+      "node_modules",
+      "src"
+    ],
+    "transform": {
+      "^.+\\.(ts|tsx)$": "./node_modules/ts-jest/preprocessor.js"
+    },
+    "testMatch": [
+      "**/tests/**/*.test.(ts|js)"
+    ],
+    "testEnvironment": "node"
+  }
+}
