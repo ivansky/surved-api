@@ -1,21 +1,34 @@
-import express from 'express';
-import graphqlHTTP from 'express-graphql';
-import * as fs from 'fs';
-import { makeExecutableSchema } from 'graphql-tools';
-import resolvers from './resolvers';
+import 'reflect-metadata';
+import chalk from 'chalk';
+import { GraphQLServer, Options } from 'graphql-yoga';
+import { buildSchema } from 'type-graphql';
 
-const PORT = process.env.PORT || 1234;
+import { SurveyResolver } from './resolvers/survey.resolver';
 
-const app = express();
+async function bootstrap() {
+    // build TypeGraphQL executable schema
+    const schema = await buildSchema({
+        resolvers: [
+            SurveyResolver,
+        ],
+    });
 
-app.use('/graphql', graphqlHTTP({
-    graphiql: true,
-    schema: makeExecutableSchema({
-        resolvers,
-        typeDefs: fs.readFileSync('server/schema.gql').toString(),
-    }),
-}));
+    // Create GraphQL server
+    const server = new GraphQLServer({ schema });
 
-app.listen(PORT);
+    // Configure server options
+    const serverOptions: Options = {
+        port: process.env.PORT || 4000,
+        endpoint: "/graphql",
+        playground: "/playground",
+    };
 
-console.log('🌎 Server on port', PORT);
+    // Start the server
+    return server.start(serverOptions, ({ port, playground }) => {
+        console.log(chalk.cyan(
+            `Server is running at http://localhost:${port}${playground}`,
+        ));
+    });
+}
+
+bootstrap();

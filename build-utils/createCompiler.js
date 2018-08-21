@@ -9,8 +9,10 @@
 
 'use strict';
 
+const chalk = require('chalk');
 const clearConsole = require('./clearConsole');
 const isInteractive = process.stdout.isTTY;
+const formatWebpackMessages = require('./formatWebpackMessages');
 
 function createCompiler(webpack, config) {
     // "Compiler" is a low-level interface to Webpack.

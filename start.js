@@ -2,54 +2,85 @@
 process.env.BABEL_ENV = 'development';
 process.env.NODE_ENV = 'development';
 
+require('source-map-support').install({
+    environment: 'node'
+});
+
 const { fork } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const chalk = require('chalk');
 const webpack = require('webpack');
-const config = require('./webpack.config.js');
 const createCompiler = require('./build-utils/createCompiler');
 const clearConsole = require('./build-utils/clearConsole');
+const formatBuildingMessages = require('./build-utils/formatBuildingMessages');
 
 process.stdin.resume();
+process.stdin.setEncoding('utf8');
 
-let compiler = createCompiler(webpack, config);
+let config;
+let compiler;
+let watching = null;
+let serverProcess = null;
+let serverCompiledFile = null;
+let restartWebpack = () => {};
 
-let watching;
-let serverProcess;
+let createWebpackCompiler = () => {
+    const WEBPACK_CONFIG_PATH = './webpack.config.js';
+    delete require.cache[require.resolve(WEBPACK_CONFIG_PATH)]
+    config = require(WEBPACK_CONFIG_PATH);
+    serverCompiledFile = path.resolve(config.output.path, config.output.filename);
+    compiler = createCompiler(webpack, config);
+};
 
-const serverCompiledFile = path.resolve(config.output.path, config.output.filename);
+const watchingOptions = {
+    aggregateTimeout: 300,
+    ignored: /(node_modules|\/dist\/)/,
+    poll: undefined
+};
 
-const exitHandler = (error) => {
-    console.log(chalk.red('Exiting server...\n'));
-
-    if (error) {
-        console.log(chalk.red('With error'), error);
-    }
-
+const closeRunningProcesses = () => {
     watching && watching.close(() => {
-        console.log(chalk.red('Webpack watching close...\n'));
+        console.info(chalk.red('Webpack watching close.'));
     });
 
     serverProcess && serverProcess.kill('SIGINT');
-
-    process.exit(1);
 };
 
-clearConsole();
+const exitHandler = (error) => {
+    console.info(chalk.cyan('Closing server.'));
 
-console.log(chalk.cyan('Starting the development server...\n'));
+    if (error) {
+        console.error(chalk.red('With error'), error);
+    }
+
+    closeRunningProcesses();
+
+    process.exit(error ? 1 : 0);
+};
 
 ['SIGINT', 'SIGTERM', 'SIGUSR1', 'SIGUSR2', 'uncaughtException'].forEach((signal) => {
     process.on(signal, exitHandler);
 });
 
-watching = compiler.watch({
-    // Example watchOptions
-    aggregateTimeout: 300,
-    ignored: /(node_modules|\/dist\/)/,
-    poll: undefined
-}, (err, stats) => {
+process.stdin.on('data', function(chunk) {
+    const input = chunk.trim();
+
+    switch(input) {
+        case 'reconfig':
+            createWebpackCompiler();
+            restartWebpack();
+            break;
+        case 'repack':
+            restartWebpack();
+            break;
+        case 'exit':
+            exitHandler();
+            break;
+    }
+});
+
+const watchingHandler = (err, stats) => {
     if (err) {
         console.log(chalk.red('Webpack watcher got error\n'), err);
 
@@ -58,35 +89,54 @@ watching = compiler.watch({
 
     clearConsole();
 
-    console.log(chalk.green('Files updated...'));
+    console.info(chalk.green('Files have been (re)loaded.'));
 
     if (serverProcess) {
         serverProcess.kill('SIGINT');
     }
 
-    if (fs.existsSync(serverCompiledFile)) {
-        console.log(chalk.green('Server file exists'));
-    } else {
-        console.log(chalk.red('Server file doesn\'t exist'));
+    if (!fs.existsSync(serverCompiledFile)) {
+        console.error(chalk.red('Server file doesn\'t exist'), serverCompiledFile);
     }
 
-    serverProcess = fork(serverCompiledFile);
+    serverProcess = fork(serverCompiledFile, [], { silent: true });
 
-    serverProcess.on('message', function(m) {
+    serverProcess.on('message', (m) => {
         // Receive results from child process
         console.log('received: ' + m);
     });
 
     serverProcess.on('error', (err) => {
-        console.log(err);
+        console.error(typeof err, err);
+    });
+
+    serverProcess.stdout.on('data', (err) => {
+        console.error(chalk.cyan('[Server]'), chalk.cyan(err.toString()));
+    });
+
+    serverProcess.stderr.on('data', async (err) => {
+        console.error(chalk.cyan('[Server]'), await formatBuildingMessages(err.toString()));
     });
 
     serverProcess.on('exit', (code, signal) => {
-        console.log(chalk.cyan('Server process exited with ' +
+        console.info((code ? chalk.red : chalk.cyan)('Server process exited with ' +
             `code ${code} and signal ${signal}`));
     });
 
-    //serverProcess.stdout.on('data', console.debug);
-
     console.log(chalk.cyan(`Server file ${serverCompiledFile} has executed`));
-});
+};
+
+const start = () => {
+    clearConsole();
+    console.log(chalk.cyan('Starting the development server...\n'));
+    watching = compiler.watch(watchingOptions, watchingHandler);
+};
+
+restartWebpack = () => {
+    closeRunningProcesses();
+    start();
+};
+
+createWebpackCompiler();
+
+start();
