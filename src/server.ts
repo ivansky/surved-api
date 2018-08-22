@@ -1,3 +1,12 @@
+if (process.env.NODE_ENV === 'development') {
+    /**
+     * Source-map helps making useful stacktrace
+     */
+    require('source-map-support').install({
+        environment: 'node',
+    });
+}
+
 import 'reflect-metadata';
 import chalk from 'chalk';
 import { GraphQLServer, Options } from 'graphql-yoga';

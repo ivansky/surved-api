@@ -20,8 +20,6 @@
     "@types/express-graphql": "^0.6.1",
     "@types/node": "^10.7.1",
     "chalk": "^2.4.1",
-    "emphasize": "^2.0.0",
-    "highlight.js": "^9.12.0",
     "react-dev-utils": "^5.0.1",
     "reflect-metadata": "^0.1.12",
     "source-map-support": "^0.5.9",

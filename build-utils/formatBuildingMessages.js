@@ -3,11 +3,7 @@ const path = require('path');
 const chalk = require('chalk');
 const readline = require('readline');
 const cwd = process.cwd();
-const emphasize = require('emphasize/lib/core');
-const ts = require('highlight.js/lib/languages/typescript');
 const WEBPACK_PATH = 'webpack:///';
-
-emphasize.registerLanguage('ts', ts);
 
 const readLineFromFile = async (filePath, lineNumber) => {
     let line = '';
@@ -68,31 +64,58 @@ const formatPath = async (input) => {
     return replaceGrays(input);
 };
 
-const formatLine = async (line) => {
+const webpackFakePathResolver = async (objectName, fakePath, outputPath) => {
+    let result = {
+        objectName,
+        realPath: chalk.gray(fakePath),
+    };
+
+    const [, prefix, localPath, lineNumber, charNumber] = /^(\/webpack:)?(.+):(\d+):(\d+)$/.exec(fakePath.replace(outputPath, ''));
+
+    if (prefix && objectName.indexOf(localPath) > -1) {
+        const pathFile = cwd + localPath;
+        const line = (await readLineFromFile(pathFile, lineNumber)).trim();
+
+        if (line) {
+            result.objectName = line;
+            result.realPath = pathFile.replace(cwd, (substring) => chalk.gray(substring)) + `:${lineNumber}:${charNumber}`;
+        }
+    }
+
+    return result;
+};
+
+const formatLine = async (line, outputPath) => {
     let matches;
 
     if (matches = /^(Error:)(.*)$/.exec(line)) {
         return chalk.red(matches[1]) + chalk.yellow(matches[2]);
     }
 
-    if (matches = /^([\s\t]+)(at)(.+)\(([^\(]+)\)$/.exec(line)) {
-        const formattedPath = await formatPath(matches[4]);
+    if (matches = /^([\s\t]+)(at )(.+)\s\(([^\(]+)\)$/.exec(line)) {
+        const {
+            realPath,
+            objectName,
+        } = /node_modules/.test(matches[4]) ? {
+            realPath: chalk.gray(matches[4]),
+            objectName: matches[3],
+        } : await webpackFakePathResolver(matches[3], matches[4], outputPath);
 
         return chalk.red(matches[1] + matches[2])
-            + chalk.cyan(matches[3])
-            + chalk.cyan('(')
-            + formattedPath
+            + chalk.cyan(objectName)
+            + chalk.cyan(' (')
+            + realPath
             + chalk.cyan(')');
     }
 
     return line;
 };
 
-const formatBuildingMessages = async (message) => {
+const formatBuildingMessages = async (message, outputPath = null) => {
     const lines = message.split('\n');
 
     const formattedLines = await Promise.all(lines.map(async (line) => {
-        return await formatLine(line);
+        return await formatLine(line, outputPath);
     }));
 
     return formattedLines.join('\n');

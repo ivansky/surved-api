@@ -2,10 +2,6 @@
 process.env.BABEL_ENV = 'development';
 process.env.NODE_ENV = 'development';
 
-require('source-map-support').install({
-    environment: 'node'
-});
-
 const { fork } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -23,13 +19,15 @@ let compiler;
 let watching = null;
 let serverProcess = null;
 let serverCompiledFile = null;
+let outputPath = null;
 let restartWebpack = () => {};
 
 let createWebpackCompiler = () => {
     const WEBPACK_CONFIG_PATH = './webpack.config.js';
     delete require.cache[require.resolve(WEBPACK_CONFIG_PATH)]
     config = require(WEBPACK_CONFIG_PATH);
-    serverCompiledFile = path.resolve(config.output.path, config.output.filename);
+    outputPath = config.output.path;
+    serverCompiledFile = path.resolve(outputPath, config.output.filename);
     compiler = createCompiler(webpack, config);
 };
 
@@ -115,7 +113,7 @@ const watchingHandler = (err, stats) => {
     });
 
     serverProcess.stderr.on('data', async (err) => {
-        console.error(chalk.cyan('[Server]'), await formatBuildingMessages(err.toString()));
+        console.error(chalk.cyan('[Server]'), await formatBuildingMessages(err.toString(), outputPath));
     });
 
     serverProcess.on('exit', (code, signal) => {
