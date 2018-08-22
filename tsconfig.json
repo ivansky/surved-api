@@ -21,8 +21,8 @@
         "node_modules/@types/*",
         "./src/types/*"
       ]
-    }
-  },
-  "emitDecoratorMetadata": true,
-  "experimentalDecorators": true
+    },
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
+  }
 }

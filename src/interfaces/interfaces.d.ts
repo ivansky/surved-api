@@ -1,12 +1,8 @@
-export namespace Types {
-    export type ID = string;
-}
-
 export namespace Entities {
     export type QuestionType = 'text' | 'select' | 'radio';
 
     interface IAbstract {
-        id: Types.ID;
+        _id?: any;
     }
 
     export interface ISurvey extends IAbstract {
@@ -16,7 +12,7 @@ export namespace Entities {
     }
 
     interface IBaseQuestion extends IAbstract {
-        surveyId: Types.ID;
+        surveyId: any;
         question: string;
         type: QuestionType;
     }
@@ -33,18 +29,18 @@ export namespace Entities {
     export type IQuestion = ITextQuestion | IChoiceQuestion;
 
     export interface IOption extends IAbstract {
-        questionId: Types.ID;
+        questionId: any;
         text: string;
         image?: string;
     }
 
     export interface IUserOption extends IAbstract {
-        optionId: Types.ID;
-        userId: Types.ID;
+        optionId: any;
+        userId: any;
     }
 
     export interface IUserText extends IAbstract {
-        userId: Types.ID;
+        userId: any;
         text: string;
     }
 }
@@ -55,7 +51,7 @@ export namespace Auth {
     }
 
     export interface IExternalUser {
-        userId: Types.ID;
+        userId: any;
         email: string;
     }
 }

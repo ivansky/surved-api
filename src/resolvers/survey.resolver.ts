@@ -1,9 +1,22 @@
-import { ResolverInterface, Resolver } from 'type-graphql';
-import dataBase from '../mock/db';
-import { Entities } from '../interfaces/interfaces';
+import { Arg, Query, Resolver, ID } from 'type-graphql';
 import { Survey } from '../types/survey.type';
+import { Db, ObjectId } from 'mongodb';
 
-@Resolver(of => Survey)
-export class SurveyResolver implements ResolverInterface<Survey> {
-    private items: Entities.ISurvey[] = dataBase.surveys;
+export default function makeSurveyResolver(db: Db) {
+
+    @Resolver()
+    class SurveyResolver {
+
+        @Query(returns => Survey, { nullable: true })
+        public async survey(@Arg('id', type => ID) id: string) {
+            return await db.collection('surveys').findOne({ _id: new ObjectId(id) });
+        }
+
+        @Query(returns => [Survey], { description: 'Get all surveys' })
+        public async surveys(): Promise<Survey[]> {
+            return await db.collection('surveys').find().toArray();
+        }
+    }
+
+    return SurveyResolver;
 }

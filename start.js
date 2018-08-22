@@ -1,3 +1,7 @@
+/**
+ * Thanks Facebook for inspiration by react-dev-tools
+ */
+
 // Do this as the first thing so that any code reading it knows the right env.
 process.env.BABEL_ENV = 'development';
 process.env.NODE_ENV = 'development';
@@ -113,7 +117,7 @@ const watchingHandler = (err, stats) => {
     });
 
     serverProcess.stderr.on('data', async (err) => {
-        console.error(chalk.cyan('[Server]'), await formatBuildingMessages(err.toString(), outputPath));
+        console.error(chalk.cyan('[Server]'), (await formatBuildingMessages(err.toString(), outputPath)).trim());
     });
 
     serverProcess.on('exit', (code, signal) => {

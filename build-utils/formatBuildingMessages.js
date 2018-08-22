@@ -70,15 +70,19 @@ const webpackFakePathResolver = async (objectName, fakePath, outputPath) => {
         realPath: chalk.gray(fakePath),
     };
 
-    const [, prefix, localPath, lineNumber, charNumber] = /^(\/webpack:)?(.+):(\d+):(\d+)$/.exec(fakePath.replace(outputPath, ''));
+    const matches = /^(\/webpack:)?(.+):(\d+):(\d+)$/.exec(fakePath.replace(outputPath, ''));
 
-    if (prefix && objectName.indexOf(localPath) > -1) {
-        const pathFile = cwd + localPath;
-        const line = (await readLineFromFile(pathFile, lineNumber)).trim();
+    if (matches) {
+        const [, prefix, localPath, lineNumber, charNumber] = matches;
 
-        if (line) {
-            result.objectName = line;
-            result.realPath = pathFile.replace(cwd, (substring) => chalk.gray(substring)) + `:${lineNumber}:${charNumber}`;
+        if (prefix && objectName.indexOf(localPath) > -1) {
+            const pathFile = cwd + localPath;
+            const line = (await readLineFromFile(pathFile, lineNumber)).trim();
+
+            if (line) {
+                result.objectName = line;
+                result.realPath = pathFile.replace(cwd, (substring) => chalk.gray(substring)) + `:${lineNumber}:${charNumber}`;
+            }
         }
     }
 
@@ -106,6 +110,8 @@ const formatLine = async (line, outputPath) => {
             + chalk.cyan(' (')
             + realPath
             + chalk.cyan(')');
+    } else if (/^([\s\t]+)(at)/.test(line)) {
+        return chalk.gray(line);
     }
 
     return line;

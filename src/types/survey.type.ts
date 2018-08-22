@@ -1,10 +1,10 @@
-import { Entities, Types } from '../interfaces/interfaces';
 import { Field, ObjectType, Int } from 'type-graphql';
+import { GraphQLString } from 'graphql';
 
 @ObjectType({ description: 'Survey object interface' })
-export class Survey implements Entities.ISurvey {
-    @Field()
-    public id: string;
+export class Survey {
+    @Field(type => GraphQLString)
+    public _id: string;
 
     @Field()
     public active: boolean;

@@ -1,4 +1,6 @@
-if (process.env.NODE_ENV === 'development') {
+const NODE_ENV = process.env.NODE_ENV;
+
+if (NODE_ENV === 'development') {
     /**
      * Source-map helps making useful stacktrace
      */
@@ -9,21 +11,49 @@ if (process.env.NODE_ENV === 'development') {
 
 import 'reflect-metadata';
 import chalk from 'chalk';
+import * as passport from 'passport';
+import * as bodyParser from 'body-parser';
+import * as cookieParser from 'cookie-parser';
+import * as session from 'express-session';
 import { GraphQLServer, Options } from 'graphql-yoga';
 import { buildSchema } from 'type-graphql';
 
-import { SurveyResolver } from './resolvers/survey.resolver';
+import makeSurveyResolver from './resolvers/survey.resolver';
+import { makeDataBaseConnection } from './database';
+import { initializeData } from './mock/initialize-data';
 
 async function bootstrap() {
-    // build TypeGraphQL executable schema
-    const schema = await buildSchema({
-        resolvers: [
-            SurveyResolver,
-        ],
-    });
+    let schema;
+
+    const db = await makeDataBaseConnection('mongodb://localhost:27017', 'surved');
+
+    if (NODE_ENV === 'development') {
+        await initializeData(db);
+    }
+
+    try {
+        schema = await buildSchema({
+            resolvers: [
+                makeSurveyResolver(db),
+            ],
+        });
+    } catch (e) {
+        throw new Error('Schema building fail :(');
+    }
 
     // Create GraphQL server
-    const server = new GraphQLServer({ schema });
+    const server = new GraphQLServer({
+        schema,
+        context: {
+            db,
+        },
+    });
+
+    server.express.use(cookieParser());
+    server.express.use(bodyParser());
+    server.express.use(session({ secret: process.env.SECRET || 'some_secret_surved_string' }));
+    server.express.use(passport.initialize());
+    server.express.use(passport.session());
 
     // Configure server options
     const serverOptions: Options = {
@@ -40,4 +70,8 @@ async function bootstrap() {
     });
 }
 
-bootstrap();
+try {
+    bootstrap();
+} catch (e) {
+    console.error(e);
+}
