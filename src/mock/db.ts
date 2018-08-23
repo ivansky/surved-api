@@ -1,4 +1,4 @@
-import { Entities } from '../interfaces/interfaces';
+import { Entities } from 'interfaces.ts';
 
 export type OptionDb = Entities.IOption;
 export type QuestionDb = Entities.IQuestion & { options?: OptionDb[] };

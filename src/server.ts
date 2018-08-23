@@ -18,9 +18,11 @@ import * as session from 'express-session';
 import { GraphQLServer, Options } from 'graphql-yoga';
 import { buildSchema } from 'type-graphql';
 
-import makeSurveyResolver from './resolvers/survey.resolver';
 import { makeDataBaseConnection } from './database';
 import { initializeData } from './mock/initialize-data';
+
+import makeSurveyResolver from './resolvers/survey.resolver';
+import makeQuestionResolver from './resolvers/question.resolver';
 
 async function bootstrap() {
     let schema;
@@ -35,10 +37,13 @@ async function bootstrap() {
         schema = await buildSchema({
             resolvers: [
                 makeSurveyResolver(db),
+                makeQuestionResolver(db),
             ],
+            dateScalarMode: 'timestamp',
         });
+        console.log(schema);
     } catch (e) {
-        throw new Error('Schema building fail :(');
+        throw e;
     }
 
     // Create GraphQL server
@@ -70,8 +75,4 @@ async function bootstrap() {
     });
 }
 
-try {
-    bootstrap();
-} catch (e) {
-    console.error(e);
-}
+bootstrap();

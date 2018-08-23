@@ -1,4 +1,4 @@
-import { Entities, Types } from './interfaces/interfaces';
+import { Entities, Types } from './interfaces';
 import db from './mock/db';
 
 function comparator(a, b, descending) {
