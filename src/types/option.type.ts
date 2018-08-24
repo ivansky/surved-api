@@ -1,13 +1,13 @@
 import { Field, ID, ObjectType } from 'type-graphql';
 
-import { EntityAbstract, IID } from './abstract-entity';
+import { EntityAbstract, EntityID } from './abstract.type';
 import { GraphQLString } from 'graphql';
 
 @ObjectType()
 export abstract class Option extends EntityAbstract {
 
     @Field(type => ID)
-    public questionId: IID;
+    public questionId: EntityID;
 
     @Field(type => GraphQLString)
     public text: string;

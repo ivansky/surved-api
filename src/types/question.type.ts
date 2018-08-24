@@ -1,6 +1,6 @@
-import { Field, ID, ObjectType, registerEnumType } from 'type-graphql';
+import { Field, ID, InputType, ObjectType, registerEnumType } from 'type-graphql';
 
-import { EntityAbstract, IID } from './abstract-entity';
+import { EntityAbstract, EntityID, IId } from './abstract.type';
 import { Option } from './option.type';
 
 export enum QuestionType {
@@ -14,15 +14,11 @@ registerEnumType(QuestionType, {
     description: 'Question type enum',
 });
 
-export abstract class QuestionInput {
-
-}
-
 @ObjectType()
 export abstract class Question extends EntityAbstract {
 
     @Field(type => ID)
-    public surveyId: IID;
+    public surveyId: EntityID;
 
     @Field()
     public question: string;
@@ -31,10 +27,28 @@ export abstract class Question extends EntityAbstract {
     public type: QuestionType;
 
     @Field(type => [Option], { nullable: true })
-    public options: Option[];
+    public options?: Option[];
 
     @Field({ nullable: true })
-    public multiLine: boolean | null;
+    public multiLine?: boolean | null;
+
+}
+
+@InputType({ description: 'New Question data' })
+export abstract class QuestionInput implements Partial<Question> {
+
+    @Field(type => ID)
+    public surveyId: IId;
+
+    @Field()
+    public question: string;
+
+    @Field(type => QuestionType)
+    public type: QuestionType;
+
+    @Field({ nullable: true })
+    public multiLine?: boolean | null;
+
 }
 
 export type ITextQuestion = Question & {

@@ -1,11 +1,15 @@
-import { Field, ObjectType, Int } from 'type-graphql';
+import { Field, ObjectType, Int, ID } from 'type-graphql';
 import { GraphQLString, GraphQLBoolean } from 'graphql';
 
-import { EntityAbstract } from './abstract-entity';
+import { EntityAbstract, EntityID } from './abstract.type';
 import { Question } from './question.type';
 
 @ObjectType({ description: 'Survey object interface' })
 export default class Survey extends EntityAbstract {
+
+    @Field(type => ID, { nullable: true })
+    public authorId?: EntityID;
+
     @Field(type => GraphQLBoolean)
     public active: boolean;
 
@@ -17,4 +21,5 @@ export default class Survey extends EntityAbstract {
 
     @Field(type => [Question])
     public questions: Question[];
+
 }

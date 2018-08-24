@@ -1,46 +1,38 @@
-import { IDbEntity, IEntity } from '../types/abstract-entity';
+import { IDbEntity, IEntity, IEntityIDs } from 'abstract.type.ts';
 import { ObjectId } from 'mongodb';
-
-export abstract class AbstractConverter<T extends object> {
-    public toDbObject(entity: IEntity<T>): IDbEntity<T> {
-        const dbObject = { ...(entity as any), _id: new ObjectId(entity.id) };
-        delete dbObject.id;
-
-        return dbObject;
-    }
-
-    public toEntity(dbObject: IDbEntity<T>): IEntity<T> {
-        const entity = { ...(dbObject as any), id: dbObject._id.toHexString() };
-        delete entity._id;
-
-        return entity;
-    }
-}
 
 export interface IConverter<T> {
     toDbObject(entity: IEntity<T>): IDbEntity<T>;
     toEntity(dbObject: IDbEntity<T>): IEntity<T>;
 }
 
-export function makeEntityConverter<T extends object>(idFields: string[]): IConverter<T> {
+export function makeEntityConverter<T extends object>(idFields: Array<IEntityIDs<T>>): IConverter<T> {
     return {
         toDbObject: (entity: IEntity<T>): IDbEntity<T> => {
-            const keys: Array<keyof IEntity<T>> = Object.keys(entity) as any;
+            const entityKeys: Array<keyof IEntity<T>> = Object.keys(entity) as any;
 
-            keys.reduce<PartiIDbEntity<T>>(() => {
-
-            })
-
-            const dbObject = { ...(entity as any), _id: new ObjectId(entity.id) };
-            delete dbObject.id;
-
-            return dbObject;
+            return entityKeys.reduce((objectEntity, key) => {
+                const resultKey = key === 'id' ? '_id' : key;
+                return Object.assign({}, objectEntity, {
+                    [resultKey]: idFields.includes(key as any) || key === 'id'
+                        // @ts-ignore
+                        ? new ObjectId(entity[key])
+                        : entity[key],
+                });
+            }, {} as IDbEntity<T>);
         },
         toEntity: (dbObject: IDbEntity<T>): IEntity<T> => {
-            const entity = { ...(dbObject as any), id: dbObject._id.toHexString() };
-            delete entity._id;
+            const entityKeys: Array<keyof IDbEntity<T>> = Object.keys(dbObject) as any;
 
-            return entity;
+            return entityKeys.reduce((entity, key) => {
+                const resultKey = key === '_id' ? 'id' : key;
+                return Object.assign({}, entity, {
+                    [resultKey]: idFields.includes(key as any) || key === '_id'
+                        // @ts-ignore
+                        ? new ObjectId(dbObject[key])
+                        : dbObject[key],
+                });
+            }, {} as IEntity<T>);
         },
     };
 }

@@ -41,7 +41,6 @@ async function bootstrap() {
             ],
             dateScalarMode: 'timestamp',
         });
-        console.log(schema);
     } catch (e) {
         throw e;
     }
